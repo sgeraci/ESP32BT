@@ -39,13 +39,14 @@ static long data_num = 0;
 static const esp_spp_sec_t sec_mask = ESP_SPP_SEC_AUTHENTICATE;
 static const esp_spp_role_t role_slave = ESP_SPP_ROLE_SLAVE;
 
-static void print_speed(void)
+static void print_speed(esp_spp_cb_param_t *param)
 {
     float time_old_s = time_old.tv_sec + time_old.tv_usec / 1000000.0;
     float time_new_s = time_new.tv_sec + time_new.tv_usec / 1000000.0;
     float time_interval = time_new_s - time_old_s;
     float speed = data_num * 8 / time_interval / 1000.0;
-    ESP_LOGI(SPP_TAG, "speed(%fs ~ %fs): %f kbit/s" , time_old_s, time_new_s, speed);
+    esp_log_buffer_hex("",param->data_ind.data,param->data_ind.len);
+    //ESP_LOGI(SPP_TAG, "speed(%fs ~ %fs): %f kbit/s" , time_old_s, time_new_s, speed);
     data_num = 0;
     time_old.tv_sec = time_new.tv_sec;
     time_old.tv_usec = time_new.tv_usec;
@@ -84,7 +85,7 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
         gettimeofday(&time_new, NULL);
         data_num += param->data_ind.len;
         if (time_new.tv_sec - time_old.tv_sec >= 3) {
-            print_speed();
+            print_speed(param);
         }
 #endif
         break;
@@ -166,11 +167,15 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
 
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+    
+    
+
     if ((ret = esp_bt_controller_init(&bt_cfg)) != ESP_OK) {
         ESP_LOGE(SPP_TAG, "%s initialize controller failed: %s\n", __func__, esp_err_to_name(ret));
         return;
     }
 
+/*
     if ((ret = esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT)) != ESP_OK) {
         ESP_LOGE(SPP_TAG, "%s enable controller failed: %s\n", __func__, esp_err_to_name(ret));
         return;
@@ -200,6 +205,9 @@ void app_main(void)
         ESP_LOGE(SPP_TAG, "%s spp init failed: %s\n", __func__, esp_err_to_name(ret));
         return;
     }
+*/
+    
+    
 
 #if (CONFIG_BT_SSP_ENABLED == true)
     /* Set default parameters for Secure Simple Pairing */
